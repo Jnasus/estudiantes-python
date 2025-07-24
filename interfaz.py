@@ -29,8 +29,8 @@ class SistemaAcademicoApp(tb.Window):
     def __init__(self):
         super().__init__(themename="flatly")
         self.title("Mini Sistema Académico")
-        self.geometry("1050x650")
-        self.resizable(False, False)
+        self.geometry("1050x800")
+        self.resizable(True, True)
         self.estudiantes = []
         self.carreras = ["Ing. Sistemas", "Ing. Industrial", "Administración", "Contabilidad"]
         self.iconos = self._cargar_iconos()
@@ -62,11 +62,15 @@ class SistemaAcademicoApp(tb.Window):
         self._crear_boton(frame_botones, "Importar desde CSV", self.importar_csv, 1, 1, 'importar', OUTLINE, "Importar datos desde archivo CSV")
         self._crear_boton(frame_botones, "Gestionar Carreras", self.gestionar_carreras, 1, 2, 'carreras', PRIMARY, "Agregar o eliminar carreras")
         self._crear_boton(frame_botones, "Salir", self.quit, 1, 3, 'salir', DANGER, "Cerrar el sistema")
+        # Nueva fila solo para Exportar a PDF
+        frame_pdf = tb.Frame(self)
+        frame_pdf.pack(pady=2)
+        self._crear_boton(frame_pdf, "Exportar a PDF", self.exportar_pdf, 0, 0, 'exportar', OUTLINE, "Exportar estadísticas y gráficos a PDF")
 
         # Tabla de estudiantes
         style = tb.Style()
-        style.configure("Treeview", rowheight=32, font=("Segoe UI", 11), padding=4)
-        style.configure("Treeview.Heading", font=("Segoe UI", 12, "bold"), background="#e9ecef")
+        style.configure("Treeview", rowheight=28, font=("Segoe UI", 9), padding=2)
+        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"), background="#e9ecef")
         style.map("Treeview", background=[('selected', '#b8daff')])
 
         self.tree = tb.Treeview(self, columns=("Nombre", "Edad", "Carrera", "Notas", "Promedio", "Aprobado", "Beca"), show="headings", bootstyle=INFO, selectmode="browse")
@@ -202,7 +206,7 @@ class SistemaAcademicoApp(tb.Window):
         estadisticas, df = generar_estadisticas(self.estudiantes)
         win = tb.Toplevel(self)
         win.title("Estadísticas")
-        win.geometry("900x600+{}+{}".format(self.winfo_x()+100, self.winfo_y()+60))
+        win.geometry("1100x900+{}+{}".format(self.winfo_x()+100, self.winfo_y()+60))
         win.grab_set()
         win.attributes('-topmost', True)
         win.after(10, lambda: win.focus_force())
@@ -212,41 +216,52 @@ class SistemaAcademicoApp(tb.Window):
         stats_frame = tb.Frame(win)
         stats_frame.pack(pady=5)
         stats_table = tb.Treeview(stats_frame, columns=("Métrica", "Valor"), show="headings", height=7, bootstyle=INFO)
-        stats_table.heading("Métrica", text="Metric")
-        stats_table.heading("Valor", text="Value")
+        stats_table.heading("Métrica", text="Métrica")
+        stats_table.heading("Valor", text="Valor")
         stats_table.column("Métrica", width=200, anchor="w")
         stats_table.column("Valor", width=120, anchor="center")
         stats = [
-            ("Total students", estadisticas['total_estudiantes']),
-            ("Average grade", f"{estadisticas['promedio_general']:.2f}"),
-            ("Max grade", f"{estadisticas['nota_maxima']:.2f}"),
-            ("Min grade", f"{estadisticas['nota_minima']:.2f}"),
-            ("Std deviation", f"{estadisticas['desviacion_estandar']:.2f}"),
-            ("Approved", estadisticas['aprobados']),
-            ("Not approved", estadisticas['desaprobados'])
+            ("Total de estudiantes", estadisticas['total_estudiantes']),
+            ("Promedio general", f"{estadisticas['promedio_general']:.2f}"),
+            ("Nota máxima", f"{estadisticas['nota_maxima']:.2f}"),
+            ("Nota mínima", f"{estadisticas['nota_minima']:.2f}"),
+            ("Desviación estándar", f"{estadisticas['desviacion_estandar']:.2f}"),
+            ("Aprobados", estadisticas['aprobados']),
+            ("No aprobados", estadisticas['desaprobados'])
         ]
         for metric, value in stats:
             stats_table.insert("", "end", values=(metric, value))
         stats_table.pack()
-        # Gráfico de barras de promedios compacto y adaptable
-        n = len(self.estudiantes)
-        fig_width = max(4, min(1.1 * n + 2, 8))  # Ajusta el ancho según la cantidad de estudiantes
-        fig, ax = plt.subplots(figsize=(fig_width, 2.2))
-        nombres = [e.nombre for e in self.estudiantes]
-        promedios = [e.calcular_promedio() for e in self.estudiantes]
-        colores = [GRAFICO_COLORES[i % len(GRAFICO_COLORES)] for i in range(len(nombres))]
-        bars = ax.bar(nombres, promedios, color=colores, edgecolor='#22223b', linewidth=1.5)
-        ax.set_ylabel('Promedio', fontsize=11)
-        ax.set_title('Promedio por Estudiante', fontsize=12, fontweight='bold')
-        ax.set_ylim(0, 21)
-        plt.xticks(rotation=25, ha='right', fontsize=10)
-        plt.yticks(fontsize=10)
-        for bar, promedio in zip(bars, promedios):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, f'{promedio:.2f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
-        fig.tight_layout(rect=[0, 0, 1, 0.93])
-        canvas = FigureCanvasTkAgg(fig, master=win)
-        canvas.draw()
-        canvas.get_tk_widget().pack(pady=10, fill='both', expand=True)
+        # Boxplot de promedios
+        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+        fig_box, ax_box = plt.subplots(figsize=(6, 2.5))
+        ax_box.boxplot(df['promedio'], vert=False, patch_artist=True, boxprops=dict(facecolor='#339af0', color='#22223b'), medianprops=dict(color='red', linewidth=2))
+        ax_box.set_title('Boxplot de Promedios', fontsize=12, fontweight='bold')
+        ax_box.set_xlabel('Promedio')
+        fig_box.tight_layout(rect=[0, 0, 1, 0.93])
+        canvas_box = FigureCanvasTkAgg(fig_box, master=win)
+        canvas_box.draw()
+        canvas_box.get_tk_widget().pack(pady=10, fill='both', expand=True)
+        # Histograma de promedios
+        fig2, ax2 = plt.subplots(figsize=(6, 2.5))
+        ax2.hist(df['promedio'], bins=8, color='#339af0', edgecolor='black')
+        ax2.set_title('Distribución de Promedios', fontsize=12, fontweight='bold')
+        ax2.set_xlabel('Promedio')
+        ax2.set_ylabel('Cantidad de Estudiantes')
+        fig2.tight_layout(rect=[0, 0, 1, 0.93])
+        canvas2 = FigureCanvasTkAgg(fig2, master=win)
+        canvas2.draw()
+        canvas2.get_tk_widget().pack(pady=10, fill='both', expand=True)
+        # Pie chart por carrera
+        fig3, ax3 = plt.subplots(figsize=(5, 2.5))
+        conteo_carreras = df['carrera'].value_counts()
+        ax3.pie(conteo_carreras, labels=conteo_carreras.index, autopct='%1.1f%%', colors=plt.cm.Paired.colors)
+        ax3.set_title('Distribución por Carrera', fontsize=12, fontweight='bold')
+        fig3.tight_layout(rect=[0, 0, 1, 0.93])
+        canvas3 = FigureCanvasTkAgg(fig3, master=win)
+        canvas3.draw()
+        canvas3.get_tk_widget().pack(pady=10, fill='both', expand=True)
 
     def exportar_csv(self):
         if not self.estudiantes:
@@ -449,6 +464,77 @@ class SistemaAcademicoApp(tb.Window):
         datos.sort(key=lambda x: parse_value(x[col_idx]), reverse=not self.orden_ascendente)
         for i, item in enumerate(lista):
             self.tree.item(item, values=datos[i])
+
+    def exportar_pdf(self):
+        # Exportar solo los estudiantes actualmente visibles en la tabla
+        estudiantes_visibles = []
+        for item in self.tree.get_children():
+            valores = self.tree.item(item)["values"]
+            estudiantes_visibles.append(valores)
+        if not estudiantes_visibles:
+            messagebox.showinfo("Exportar a PDF", "No hay estudiantes para exportar.", parent=self)
+            return
+        try:
+            from fpdf import FPDF
+            from datetime import datetime
+            import os
+            pdf = FPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            # --- Portada ---
+            pdf.add_page()
+            if os.path.exists('logo.png'):
+                pdf.image('logo.png', x=80, y=20, w=50)
+            pdf.set_font("Arial", 'B', 28)
+            pdf.set_text_color(51, 58, 128)
+            pdf.ln(60)
+            pdf.cell(0, 20, "Reporte Académico", ln=True, align='C')
+            pdf.set_font("Arial", '', 18)
+            pdf.set_text_color(44, 62, 80)
+            pdf.cell(0, 12, "Mini Sistema Académico", ln=True, align='C')
+            pdf.ln(5)
+            pdf.set_font("Arial", '', 12)
+            pdf.set_text_color(100, 100, 100)
+            pdf.cell(0, 10, f"Fecha de generación: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True, align='C')
+            pdf.ln(10)
+            pdf.set_draw_color(51, 154, 240)
+            pdf.set_line_width(1.5)
+            pdf.line(30, pdf.get_y(), 180, pdf.get_y())
+            pdf.ln(20)
+            pdf.set_font("Arial", 'I', 12)
+            pdf.set_text_color(120, 120, 120)
+            pdf.cell(0, 10, 'Reporte generado automáticamente por el sistema.', ln=True, align='C')
+            # --- Tabla de registros de alumnos ---
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 16)
+            pdf.set_text_color(51, 58, 128)
+            pdf.cell(0, 12, "Registros de Alumnos", ln=True, align='C')
+            pdf.ln(5)
+            # Encabezados
+            pdf.set_font("Arial", 'B', 11)
+            pdf.set_fill_color(51, 154, 240)
+            pdf.set_text_color(255,255,255)
+            headers = ["Nombre", "Edad", "Carrera", "Notas", "Promedio", "Aprobado", "Beca"]
+            col_widths = [45, 15, 38, 48, 22, 22, 18]  # Ajustados para evitar cortes
+            for i, h in enumerate(headers):
+                pdf.cell(col_widths[i], 8, h, border=1, fill=True, align='C')
+            pdf.ln()
+            pdf.set_font("Arial", '', 10)
+            pdf.set_text_color(0,0,0)
+            # Filas
+            for row in estudiantes_visibles:
+                for i, val in enumerate(row):
+                    if headers[i] == "Aprobado":
+                        val = "Sí" if "Sí" in str(val) else "No"
+                    if headers[i] == "Beca":
+                        val = "Sí" if "Sí" in str(val) else "No"
+                    pdf.cell(col_widths[i], 8, str(val), border=1, align='C')
+                pdf.ln()
+            # Guardar PDF
+            output_path = os.path.join(os.getcwd(), 'reporte_estudiantes.pdf')
+            pdf.output(output_path)
+            messagebox.showinfo("Exportar a PDF", f"Reporte PDF generado exitosamente en:\n{output_path}", parent=self)
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error al exportar a PDF:\n{str(e)}", parent=self)
 
 if __name__ == "__main__":
     app = SistemaAcademicoApp()
