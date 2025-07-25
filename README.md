@@ -28,6 +28,7 @@ Este es un sistema de gestión académica desarrollado en Python, que cuenta con
 - **numpy:** Para cálculos numéricos (dependencia de pandas).
 - **matplotlib:** Para la generación de gráficos.
 - **Pillow (PIL):** Para el manejo de las imágenes de los iconos.
+- **fpdf2:** Para la exportación de reportes en formato PDF.
 
 ## 🚀 Instalación
 
