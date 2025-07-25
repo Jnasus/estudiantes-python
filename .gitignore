@@ -1,0 +1,20 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Archivos de datos generados por la aplicación
+estudiantes.csv
+
+# Documentos y archivos binarios no esenciales
+*.pdf
+
+# Archivos de configuración de IDEs y editores
+.vscode/
+
+# Archivos de sistema operativo
+.DS_Store
