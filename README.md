@@ -49,17 +49,20 @@ Este es un sistema de gestión académica desarrollado en Python, que cuenta con
 
 ## 🏃‍♂️ Uso
 
-Una vez instaladas las dependencias, ejecuta el programa:
+Una vez instaladas las dependencias, ejecuta el programa desde el directorio raíz del proyecto:
 ```bash
-python main.py
+python src/main.py
 ```
 
 ## 📂 Estructura del Proyecto
 
-- `main.py`: Punto de entrada que inicia la aplicación.
-- `interfaz.py`: Define toda la interfaz gráfica y su lógica.
-- `funciones.py`: Funciones de backend (lógica de negocio).
-- `clases.py`: Clases `Estudiante` y `Becado`.
-- `requirements.txt`: Todas las dependencias del proyecto.
-- `estudiantes.csv`: Archivo de datos por defecto.
-- `icon_*.png`: Iconos de la interfaz.
+- `src/`: Carpeta que contiene todo el código fuente de la aplicación.
+  - `main.py`: Punto de entrada que inicia la aplicación.
+  - `interfaz.py`: Define toda la interfaz gráfica y su lógica.
+  - `funciones.py`: Funciones de backend (lógica de negocio).
+  - `clases.py`: Clases `Estudiante` y `Becado`.
+- `assets/`: Carpeta con los iconos y logos utilizados en la interfaz.
+- `requirements.txt`: Lista de todas las dependencias de Python para el proyecto.
+- `.gitignore`: Archivo que especifica qué archivos y carpetas ignorar en Git.
+- `estudiantes.csv`: Archivo de datos por defecto (generado por la app, ignorado por Git).
+- `README.md`: Este archivo de documentación.

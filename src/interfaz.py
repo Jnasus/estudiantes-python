@@ -15,14 +15,14 @@ BADGE_NOBECA = '#adb5bd'  # gris
 GRAFICO_COLORES = ['#339af0', '#51cf66', '#ffbe76', '#ff6b6b', '#845ef7', '#f783ac']
 
 ICONOS = {
-    'registrar': 'icon_registrar.png',
-    'buscar': 'icon_buscar.png',
-    'mostrar': 'icon_mostrar.png',
-    'estadisticas': 'icon_estadisticas.png',
-    'exportar': 'icon_exportar.png',
-    'importar': 'icon_importar.png',
-    'carreras': 'icon_carreras.png',
-    'salir': 'icon_salir.png',
+    'registrar': 'assets/icon_registrar.png',
+    'buscar': 'assets/icon_buscar.png',
+    'mostrar': 'assets/icon_mostrar.png',
+    'estadisticas': 'assets/icon_estadisticas.png',
+    'exportar': 'assets/icon_exportar.png',
+    'importar': 'assets/icon_importar.png',
+    'carreras': 'assets/icon_carreras.png',
+    'salir': 'assets/icon_salir.png',
 }
 
 class SistemaAcademicoApp(tb.Window):
@@ -37,12 +37,22 @@ class SistemaAcademicoApp(tb.Window):
         self._crear_widgets()
 
     def _cargar_iconos(self):
+        # Determinar la ruta base para los assets
+        # Esto hace que funcione tanto si se ejecuta desde la raíz como desde src/
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        assets_dir = os.path.join(os.path.dirname(base_path), 'assets')
+        if not os.path.exists(assets_dir):
+             assets_dir = os.path.join(base_path, 'assets') # Fallback por si acaso
+
         iconos = {}
         for key, filename in ICONOS.items():
-            if os.path.exists(filename):
-                img = Image.open(filename).resize((22, 22))
+            # Usar solo el nombre del archivo y unirlo a la ruta de assets
+            icon_path = os.path.join(assets_dir, os.path.basename(filename))
+            if os.path.exists(icon_path):
+                img = Image.open(icon_path).resize((22, 22))
                 iconos[key] = ImageTk.PhotoImage(img)
             else:
+                print(f"Icono no encontrado: {icon_path}")
                 iconos[key] = None
         return iconos
 
@@ -482,8 +492,14 @@ class SistemaAcademicoApp(tb.Window):
             pdf.set_auto_page_break(auto=True, margin=15)
             # --- Portada ---
             pdf.add_page()
-            if os.path.exists('logo.png'):
-                pdf.image('logo.png', x=80, y=20, w=50)
+            # Construir la ruta al logo de forma robusta
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            logo_path = os.path.join(os.path.dirname(base_path), 'assets', 'logo.png')
+            if not os.path.exists(logo_path):
+                logo_path = os.path.join(base_path, 'assets', 'logo.png')
+
+            if os.path.exists(logo_path):
+                pdf.image(logo_path, x=80, y=20, w=50)
             pdf.set_font("Arial", 'B', 28)
             pdf.set_text_color(51, 58, 128)
             pdf.ln(60)
@@ -538,4 +554,4 @@ class SistemaAcademicoApp(tb.Window):
 
 if __name__ == "__main__":
     app = SistemaAcademicoApp()
-    app.mainloop() 
+    app.mainloop()
